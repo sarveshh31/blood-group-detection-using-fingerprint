@@ -1,93 +1,247 @@
-# BloodPrint — Blood Group Classifier via Fingerprint
-**CNN (EfficientNet-B0) + SVM hybrid pipeline with Flask web UI**
+# 🩸 Blood Group Detection Using Fingerprint Images
+
+An AI-powered blood group detection system that predicts a person's blood group from fingerprint images using Machine Learning and Deep Learning techniques. The project uses feature extraction, preprocessing, and trained classification models to identify blood groups accurately from biometric patterns.
 
 ---
 
-## Project Structure
+# 🚀 Features
 
-```
-blood_group_classifier/
-├── dataset_blood_group/     ← your dataset goes here
-│   ├── A+/
-│   ├── A-/
-│   ├── B+/
-│   ├── B-/
-│   ├── AB+/
-│   ├── AB-/
-│   ├── O+/
-│   └── O-/
-├── models/                  ← auto-created after training
-│   ├── svm_model.pkl
+- 🔍 Blood group prediction using fingerprint images
+- 🧠 Machine Learning + Deep Learning models
+- 📊 Trained SVM and PyTorch models included
+- ⚡ Fast prediction pipeline
+- 🌐 Flask web application support
+- 📁 Organized dataset structure
+- 🧪 Testing dataset for evaluation
+- 💾 Saved PCA, scaler, and class label encoders
+
+---
+
+# 🛠️ Tech Stack
+
+- Python
+- PyTorch
+- Scikit-learn
+- OpenCV
+- NumPy
+- Flask
+- HTML/CSS
+
+---
+
+# 📂 Project Structure
+
+```bash
+BLOOD-GROUP-DETECTION-USING-FINGERPRINT/
+│
+├── dataset_blood_group/
+│   ├── A+
+│   ├── A-
+│   ├── AB+
+│   ├── AB-
+│   ├── B+
+│   ├── B-
+│   ├── O+
+│   └── O-
+│
+├── models/
+│   ├── best_model.pth
+│   ├── class_names.pkl
+│   ├── pca.pkl
 │   ├── scaler.pkl
-│   └── class_names.pkl
+│   └── svm_model.pkl
+│
 ├── src/
+│   ├── dataset.py
 │   ├── feature_extractor.py
+│   ├── model.py
+│   ├── predict.py
 │   ├── train.py
-│   └── predict.py
+│   └── utils.py
+│
 ├── templates/
-│   └── index.html
+│
+├── testing_dataset/
+│
+├── venv/
+│
+├── .gitignore
 ├── app.py
-├── requirements.txt
-└── README.md
+├── README.md
+└── requirements.txt
 ```
 
 ---
 
-## Quick Start
+# ⚙️ Installation
 
-### 1. Install dependencies
+## 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/your-username/Blood-Group-Detection-Using-Fingerprint.git
+cd Blood-Group-Detection-Using-Fingerprint
+```
+
+---
+
+## 2️⃣ Create Virtual Environment
+
+### Windows
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+### Linux / Mac
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+---
+
+## 3️⃣ Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Place your dataset
-Make sure `dataset_blood_group/` exists in the project root with one sub-folder per blood group.
+---
 
-### 3. Train the model
-```bash
-python src/train.py
-```
-This will:
-- Extract 1280-dim EfficientNet-B0 features for every image (GPU if available)
-- Fit a StandardScaler
-- Train an RBF-SVM (C=5, gamma='scale', class_weight='balanced')
-- Print accuracy, classification report, confusion matrix
-- Save `models/svm_model.pkl`, `models/scaler.pkl`, `models/class_names.pkl`
+# ▶️ Running the Application
 
-### 4. Launch the web UI
+Start the Flask application:
+
 ```bash
 python app.py
 ```
-Open your browser at **http://127.0.0.1:5000**
 
-### 5. Predict from command line (optional)
+Open your browser and go to:
+
 ```bash
-python src/predict.py path/to/fingerprint.jpg
+http://127.0.0.1:5000
 ```
 
 ---
 
-## Model Design
+# 🧠 Model Training
 
-| Component | Details |
-|-----------|---------|
-| Feature extractor | EfficientNet-B0 (ImageNet pretrained, frozen) |
-| Feature dimension | 1280 |
-| Scaler | StandardScaler |
-| Classifier | SVC(kernel='rbf', C=5, gamma='scale', class_weight='balanced') |
-| Input size | 224 × 224 RGB |
-| Split | 80% train / 20% test (stratified) |
+To train the model again:
+
+```bash
+python src/train.py
+```
 
 ---
 
-## Expected Accuracy
+# 🔮 Prediction
 
-~70–75% on 6 000 fingerprint images (8 classes).
+To predict blood group using fingerprint images:
+
+```bash
+python src/predict.py
+```
 
 ---
 
-## Notes
+# 📊 Dataset Information
 
-- No PCA, no GridSearchCV, no DL classifier — pure CNN features → SVM.
-- `probability=True` in SVC enables per-class confidence scores in the UI.
-- The Flask server pre-loads all models at startup for fast inference.
+The dataset contains fingerprint images categorized into the following blood groups:
+
+- A+
+- A-
+- B+
+- B-
+- AB+
+- AB-
+- O+
+- O-
+
+Each folder inside `dataset_blood_group` represents a separate blood group class.
+
+---
+
+# 🧪 Machine Learning Pipeline
+
+The project follows the following workflow:
+
+1. Fingerprint image preprocessing
+2. Feature extraction
+3. Feature scaling using StandardScaler
+4. PCA dimensionality reduction
+5. Classification using:
+   - Support Vector Machine (SVM)
+   - Deep Learning Model (PyTorch)
+
+---
+
+# 🌐 Web Application
+
+The project includes a Flask-based web application where users can:
+
+- Upload fingerprint images
+- Predict blood groups
+- View prediction results instantly
+
+---
+
+# 📸 Future Improvements
+
+- Improve model accuracy with larger datasets
+- Add CNN-based architecture
+- Deploy using Docker
+- Add real-time fingerprint scanner integration
+- Convert into Android/iOS mobile application
+- Add cloud deployment support
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+## Steps to Contribute
+
+1. Fork the repository
+
+2. Create a feature branch
+
+```bash
+git checkout -b feature-name
+```
+
+3. Commit your changes
+
+```bash
+git commit -m "Added new feature"
+```
+
+4. Push to GitHub
+
+```bash
+git push origin feature-name
+```
+
+5. Create a Pull Request
+
+---
+
+# 📜 License
+
+This project is developed for educational and research purposes only.
+
+---
+
+# 👨‍💻 Author
+
+## Sarvesh Tiwari & Chaitanya Wanjarkar
+
+---
+
+# ⭐ Support
+
+If you found this project useful, give it a ⭐ on GitHub.
+
+---
