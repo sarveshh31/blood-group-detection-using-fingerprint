@@ -1,0 +1,55 @@
+<!-- templates/result.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Group Prediction Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f8ff;
+        }
+        .result-container {
+            text-align: center;
+            padding: 20px;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+        }
+        .result-container h1 {
+            color: #3498db;
+            font-size: 2.5em;
+            margin: 0;
+        }
+        .result-container p {
+            font-size: 1.2em;
+            color: #333333;
+        }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        <h1>Predicted Blood Group</h1>
+
+        <p style="font-size: 2em; font-weight: bold; color: #e74c3c;">
+            {{ blood_group }}
+        </p>
+
+        <p style="font-size: 1.2em;">
+            Confidence Score: {{ confidence }}
+        </p>
+
+        <p style="color: gray; font-size: 0.9em; margin-top: 10px;">
+            <i>Note: Prototype demo – final AI model integration in progress</i>
+        </p>
+    </div>
+</body>
+</html>
+

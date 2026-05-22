@@ -1,0 +1,18 @@
+# Blood Group Classifier — dependencies
+# Install with:  pip install -r requirements.txt
+
+# Deep learning / vision
+torch>=2.1.0
+torchvision>=0.16.0
+
+# Machine learning
+scikit-learn>=1.3.0
+
+# Utilities
+numpy>=1.24.0
+Pillow>=10.0.0
+joblib>=1.3.0
+tqdm>=4.65.0
+
+# Web backend
+flask>=3.0.0

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BloodPrint — Blood Group Classifier</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Reset & base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #161619;
+      --surface2:  #1e1e23;
+      --border:    rgba(255,255,255,0.07);
+      --border2:   rgba(255,255,255,0.12);
+      --text:      #f0eff5;
+      --muted:     #7a7a8c;
+      --accent:    #e63946;      /* blood red */
+      --accent2:   #ff6b6b;
+      --gold:      #f4a261;
+      --green:     #52b788;
+      --glow:      rgba(230, 57, 70, 0.18);
+      --font-serif: 'DM Serif Display', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+      --font-mono:  'DM Mono', monospace;
+      --radius:     14px;
+      --transition: 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 1.25rem 4rem;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── Ambient background ───────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(ellipse at center,
+        rgba(230,57,70,0.12) 0%,
+        rgba(230,57,70,0.04) 40%,
+        transparent 70%
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Fingerprint grid texture */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 28px,
+          rgba(255,255,255,0.012) 28px,
+          rgba(255,255,255,0.012) 29px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 28px,
+          rgba(255,255,255,0.012) 28px,
+          rgba(255,255,255,0.012) 29px
+        );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Header ───────────────────────────────────────── */
+    header {
+      width: 100%;
+      max-width: 760px;
+      margin-top: 3.5rem;
+      margin-bottom: 2.5rem;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(230,57,70,0.12);
+      border: 1px solid rgba(230,57,70,0.25);
+      border-radius: 100px;
+      padding: 0.35rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent2);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    .logo-badge span { display: inline-block; width: 7px; height: 7px;
+      background: var(--accent); border-radius: 50%;
+      animation: pulse 1.8s ease-in-out infinite; }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(2.4rem, 6vw, 3.5rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--accent2);
+    }
+
+    .subtitle {
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+      font-weight: 300;
+      line-height: 1.6;
+    }
+
+    /* ── Card ─────────────────────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 760px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.7s 0.15s ease both;
+    }
+
+    /* ── Drop zone ────────────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border2);
+      border-radius: 10px;
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--glow);
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-icon {
+      width: 56px; height: 56px;
+      margin: 0 auto 1rem;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(230,57,70,0.1);
+      border-radius: 50%;
+      border: 1px solid rgba(230,57,70,0.2);
+      font-size: 1.5rem;
+    }
+
+    .drop-title {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+
+    .drop-sub {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ── Preview area ─────────────────────────────────── */
+    #preview-area {
+      display: none;
+      margin-top: 1.5rem;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+
+    #preview-area.visible { display: flex; }
+
+    #preview-img {
+      width: 140px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+      flex-shrink: 0;
+    }
+
+    .preview-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding-top: 0.25rem;
+    }
+
+    .preview-name {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--muted);
+      word-break: break-all;
+    }
+
+    .preview-label {
+      font-size: 0.78rem;
+      color: var(--green);
+      font-family: var(--font-mono);
+      background: rgba(82,183,136,0.1);
+      border: 1px solid rgba(82,183,136,0.2);
+      border-radius: 6px;
+      padding: 0.2rem 0.6rem;
+      display: inline-block;
+    }
+
+    /* ── Submit button ────────────────────────────────── */
+    .btn-predict {
+      margin-top: 1.5rem;
+      width: 100%;
+      padding: 0.95rem 2rem;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-predict::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+      pointer-events: none;
+    }
+
+    .btn-predict:hover:not(:disabled) {
+      background: #c1121f;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(230,57,70,0.35);
+    }
+
+    .btn-predict:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Loading state ────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    /* ── Result card ──────────────────────────────────── */
+    #result-area {
+      display: none;
+      margin-top: 1.5rem;
+    }
+
+    #result-area.visible { display: block; }
+
+    .result-card {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 1.75rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--gold));
+    }
+
+    .result-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.6rem;
+    }
+
+    .result-blood-group {
+      font-family: var(--font-serif);
+      font-size: 4rem;
+      font-weight: 400;
+      color: var(--accent2);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .result-confidence {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--gold);
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Probability bars ─────────────────────────────── */
+    .prob-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0.65rem;
+      text-align: left;
+      margin-top: 0.5rem;
+    }
+
+    .prob-item {
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border);
+    }
+
+    .prob-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+    }
+
+    .prob-name {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .prob-value {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .prob-bar-bg {
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .prob-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .prob-item.is-top .prob-name { color: var(--accent2); }
+    .prob-item.is-top .prob-bar-fill {
+      background: linear-gradient(90deg, var(--accent), var(--gold));
+    }
+
+    /* ── Error state ──────────────────────────────────── */
+    .error-msg {
+      background: rgba(230,57,70,0.08);
+      border: 1px solid rgba(230,57,70,0.25);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--accent2);
+      text-align: center;
+    }
+
+    /* ── Divider ──────────────────────────────────────── */
+    .divider {
+      width: 100%;
+      max-width: 760px;
+      height: 1px;
+      background: var(--border);
+      margin: 2rem 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Info pills ───────────────────────────────────── */
+    .info-row {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.3rem 0.9rem;
+    }
+
+    .pill-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Animations ───────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.7); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 520px) {
+      .card { padding: 1.25rem; }
+      #preview-area { flex-direction: column; }
+      #preview-img { width: 100%; height: 200px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header>
+    <div class="logo-badge">
+      <span></span>
+      CNN + SVM &nbsp;·&nbsp; EfficientNet-B0
+    </div>
+    <h1>Blood<em>Print</em></h1>
+    <p class="subtitle">
+      Upload a fingerprint image — our deep learning pipeline<br>
+      identifies your blood group in seconds.
+    </p>
+  </header>
+
+  <!-- Main card -->
+  <div class="card">
+
+    <!-- Drop zone -->
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp" />
+      <div class="drop-icon">🖐️</div>
+      <p class="drop-title">Drop fingerprint image here</p>
+      <p class="drop-sub">JPG · PNG · BMP · TIFF &nbsp;|&nbsp; max 16 MB</p>
+    </div>
+
+    <!-- Preview -->
+    <div id="preview-area">
+      <img id="preview-img" src="" alt="Preview" />
+      <div class="preview-info">
+        <div class="preview-name" id="preview-name">—</div>
+        <div class="preview-label">✓ Image ready for analysis</div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <button class="btn-predict" id="predict-btn" disabled>
+      Analyse Blood Group
+    </button>
+
+    <!-- Result -->
+    <div id="result-area">
+      <div id="result-content"></div>
+    </div>
+
+  </div>
+
+  <!-- Divider + info -->
+  <div class="divider"></div>
+  <div class="info-row">
+    <div class="pill">
+      <span class="pill-dot" style="background:#52b788"></span>
+      EfficientNet-B0 features
+    </div>
+    <div class="pill">
+      <span class="pill-dot" style="background:#f4a261"></span>
+      RBF-SVM classifier
+    </div>
+    <div class="pill">
+      <span class="pill-dot" style="background:#e63946"></span>
+      8 blood groups
+    </div>
+    <div class="pill">
+      <span class="pill-dot" style="background:#a8dadc"></span>
+      ~6 000 training images
+    </div>
+  </div>
+
+  <!-- ── Script ─────────────────────────────────────── -->
+  <script>
+    const dropZone   = document.getElementById('drop-zone');
+    const fileInput  = document.getElementById('file-input');
+    const predictBtn = document.getElementById('predict-btn');
+    const previewArea = document.getElementById('preview-area');
+    const previewImg  = document.getElementById('preview-img');
+    const previewName = document.getElementById('preview-name');
+    const resultArea  = document.getElementById('result-area');
+    const resultContent = document.getElementById('result-content');
+
+    let selectedFile = null;
+
+    // ── Drag-and-drop ────────────────────────────────
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) handleFile(fileInput.files[0]);
+    });
+
+    function handleFile(file) {
+      selectedFile = file;
+      previewName.textContent = file.name;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        previewImg.src = e.target.result;
+        previewArea.classList.add('visible');
+      };
+      reader.readAsDataURL(file);
+
+      predictBtn.disabled = false;
+      resultArea.classList.remove('visible');
+      resultContent.innerHTML = '';
+    }
+
+    // ── Predict ──────────────────────────────────────
+    predictBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      // Loading state
+      predictBtn.disabled = true;
+      predictBtn.innerHTML = '<span class="spinner"></span> Analysing …';
+      resultArea.classList.remove('visible');
+      resultContent.innerHTML = '';
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        const res  = await fetch('/predict', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          showError(data.error || 'Unknown error occurred.');
+          return;
+        }
+
+        showResult(data);
+
+      } catch (err) {
+        showError('Network error: could not reach the server.');
+      } finally {
+        predictBtn.disabled = false;
+        predictBtn.innerHTML = 'Analyse Blood Group';
+      }
+    });
+
+    // ── Render result ────────────────────────────────
+    function showResult(data) {
+      const probs = data.all_probabilities || {};
+      const topClass = data.predicted_class;
+
+      // Build probability bars
+      const sortedProbs = Object.entries(probs).sort((a, b) => b[1] - a[1]);
+
+      let probHTML = '';
+      if (sortedProbs.length > 0) {
+        const items = sortedProbs.map(([cls, pct]) => `
+          <div class="prob-item ${cls === topClass ? 'is-top' : ''}">
+            <div class="prob-header">
+              <span class="prob-name">${cls}</span>
+              <span class="prob-value">${pct.toFixed(1)}%</span>
+            </div>
+            <div class="prob-bar-bg">
+              <div class="prob-bar-fill" data-width="${pct}"></div>
+            </div>
+          </div>
+        `).join('');
+
+        probHTML = `
+          <p style="font-size:0.75rem;color:var(--muted);font-family:var(--font-mono);
+                     margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.1em;">
+            Probability breakdown
+          </p>
+          <div class="prob-grid">${items}</div>
+        `;
+      }
+
+      const confText = data.confidence !== null
+        ? `<div class="result-confidence">Confidence: ${data.confidence}%</div>`
+        : '';
+
+      resultContent.innerHTML = `
+        <div class="result-card">
+          <div class="result-label">Predicted Blood Group</div>
+          <div class="result-blood-group">${data.predicted_class}</div>
+          ${confText}
+          ${probHTML}
+        </div>
+      `;
+
+      resultArea.classList.add('visible');
+
+      // Animate bars after render
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.prob-bar-fill').forEach(el => {
+          const w = parseFloat(el.getAttribute('data-width'));
+          el.style.width = w + '%';
+        });
+      });
+    }
+
+    function showError(msg) {
+      resultContent.innerHTML = `<div class="error-msg">⚠ ${msg}</div>`;
+      resultArea.classList.add('visible');
+    }
+  </script>
+</body>
+</html>
