@@ -236,7 +236,7 @@ This project is developed for educational and research purposes only.
 
 # 👨‍💻 Author
 
-## Sarvesh Tiwari & Chaitanya Wanjarkar
+## Sarvesh Tiwari & Chaitanya Wanjarkar.
 
 ---
 
